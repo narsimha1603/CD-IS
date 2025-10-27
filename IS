@@ -152,6 +152,47 @@ int columnCount, String key){
 3.Implement DES
  (a)Generate Cipher text for the given Plaintext.
  (b)Retrieve the Plaintext from the given Ciphertext.
+
+3(I)
+
+import javax.swing.*;
+import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.*;
+import java.util.*;
+
+public class DES {
+    private static byte[] key;
+
+    public static void main(String[] args) {
+            KeyGenerator keyGen = KeyGenerator.getInstance("DES");
+            keyGen.init(56, new SecureRandom());
+            SecretKey secretKey = keyGen.generateKey();
+            key = secretKey.getEncoded();
+            System.out.println("DES Key: " + new String(key));
+            String message = JOptionPane.showInputDialog("Enter message to encrypt:");
+            byte[] encrypted = encrypt(message.getBytes());
+            String encryptedText = Base64.getEncoder().encodeToString(encrypted);
+            JOptionPane.showMessageDialog(null, "Encrypted:\n" + encryptedText);
+            byte[] decrypted = decrypt(Base64.getDecoder().decode(encryptedText));
+            JOptionPane.showMessageDialog(null, "Decrypted:\n" + new String(decrypted));
+        } 
+
+    private static byte[] encrypt(byte[] clear) throws Exception {
+        Cipher cipher = Cipher.getInstance("DES");
+        cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "DES"));
+        return cipher.doFinal(clear);
+    }
+
+    private static byte[] decrypt(byte[] encrypted) throws Exception {
+        Cipher cipher = Cipher.getInstance("DES");
+        cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "DES"));
+        return cipher.doFinal(encrypted);
+    }
+}
+
+3(II)
+
 Aim:To Understand the DES Algorithm .
 Program :
 import javax.swing.*;
