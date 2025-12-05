@@ -1,0 +1,101 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAXP 50
+#define MAXL 200
+#define MAXF 40
+
+char productions[MAXP][MAXL];
+char firsts[MAXP][MAXF];
+int n;
+
+int isTerminal(char symbol) {
+    return !(symbol >= 'A' && symbol <= 'Z');
+}
+
+void removeDuplicates(char *s) {
+    int seen[256] = {0}, write = 0;
+    for (int i = 0; s[i]; ++i) {
+        unsigned char c = (unsigned char)s[i];
+        if (!seen[c]) { seen[c] = 1; s[write++] = s[i]; }
+    }
+    s[write] = '\0';
+}
+
+void append_char(char *result, char c) {
+    int L = strlen(result);
+    for (int i = 0; i < L; ++i) if (result[i] == c) return;
+    result[L] = c;
+    result[L+1] = '\0';
+}
+
+void findFirst(int idx, char result[], int visiting[]) {
+    if (visiting[idx]) return;
+    visiting[idx] = 1;
+
+    char *prod = productions[idx];
+    int k = 3;
+
+    while (prod[k]) {
+        while (prod[k] && isspace((unsigned char)prod[k])) k++;
+        if (!prod[k]) break;
+
+        if (prod[k] == 'e') {
+            append_char(result, 'e');
+            while (prod[k] && prod[k] != '|') k++;
+            if (prod[k] == '|') k++;
+            continue;
+        }
+
+        char sym = prod[k];
+        if (isTerminal(sym)) {
+            append_char(result, sym);
+        } else {
+            for (int j = 0; j < n; ++j) {
+                if (productions[j][0] == sym) {
+                    char tmp[MAXF] = {0};
+                    findFirst(j, tmp, visiting);
+                    for (int t = 0; tmp[t]; ++t) {
+                        if (tmp[t] == 'e') continue;
+                        append_char(result, tmp[t]);
+                    }
+                }
+            }
+        }
+
+        while (prod[k] && prod[k] != '|') k++;
+        if (prod[k] == '|') k++;
+    }
+
+    visiting[idx] = 0;
+}
+
+int main(void) {
+    printf("Enter number of productions: ");
+    if (scanf("%d", &n) != 1) return 0;
+    getchar();
+
+    for (int i = 0; i < n; ++i) {
+        printf("Enter production %d (e.g. E->E+T|T): ", i + 1);
+        fgets(productions[i], sizeof productions[i], stdin);
+        productions[i][strcspn(productions[i], "\n")] = '\0';
+    }
+
+    printf("\nFIRST sets:\n");
+    for (int i = 0; i < n; ++i) {
+        char result[MAXF] = {0};
+        int visiting[MAXP] = {0};
+        findFirst(i, result, visiting);
+        removeDuplicates(result);
+        printf("FIRST(%c) = { ", productions[i][0]);
+        for (size_t j = 0; j < strlen(result); ++j) {
+            char ch = result[j];
+            if (ch == 'e') printf("ε");
+            else printf("%c", ch);
+            if (j + 1 < strlen(result)) printf(", ");
+        }
+        printf(" }\n");
+    }
+    return 0;
+}
