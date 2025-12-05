@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAXF 10
+
+/* Nonterminals: 0=E,1=T,2=F */
+const char *prodsE[][4] = { {"E","+","T",NULL}, {"T",NULL} };
+const char *prodsT[][4] = { {"T","*","F",NULL}, {"F",NULL} };
+const char *prodsF[][4] = { {"(","E",")",NULL}, {"id",NULL} };
+
+const char **prods[3] = { (const char**)prodsE, (const char**)prodsT, (const char**)prodsF };
+int nalts[3] = {2,2,2};
+
+char *first[3][MAXF];
+int fc[3] = {0};
+
+int has(int nt,const char *s){
+    for(int i=0;i<fc[nt];i++) if(!strcmp(first[nt][i],s)) return 1;
+    return 0;
+}
+int add(int nt,const char *s){
+    if(has(nt,s)) return 0;
+    if(fc[nt]>=MAXF) return 0;
+    first[nt][fc[nt]++]= (char*)s;
+    return 1;
+}
+int isNT(const char *s){
+    return (s[0]=='E' && s[1]==0) ? 0 : (s[0]=='T' && s[1]==0) ? 1 : (s[0]=='F' && s[1]==0) ? 2 : -1;
+}
+
+int main(void){
+    int changed=1;
+    while(changed){
+        changed=0;
+        for(int A=0;A<3;A++){
+            for(int a=0;a<nalts[A];a++){
+                const char **alt = (const char**)prods[A] + a*4;
+                int all_eps = 1;
+                for(int s=0; alt[s]; s++){
+                    const char *sym = alt[s];
+                    int nt = isNT(sym);
+                    if(nt<0){
+                        if(add(A,sym)) changed=1;
+                        all_eps=0; break;
+                    } else {
+                        for(int k=0;k<fc[nt];k++){
+                            if(strcmp(first[nt][k],"eps")) if(add(A, first[nt][k])) changed=1;
+                        }
+                        if(!has(nt,"eps")) { all_eps=0; break; }
+                    }
+                }
+                if(all_eps) if(add(A,"eps")) changed=1;
+            }
+        }
+    }
+    printf("FIRST(E)  = { ");
+    for(int i=0;i<fc[0];i++){ printf("%s", first[0][i]); if(i+1<fc[0]) printf(", "); }
+    printf(" }\n");
+    printf("FIRST(T)  = { ");
+    for(int i=0;i<fc[1];i++){ printf("%s", first[1][i]); if(i+1<fc[1]) printf(", "); }
+    printf(" }\n");
+    printf("FIRST(F)  = { ");
+    for(int i=0;i<fc[2];i++){ printf("%s", first[2][i]); if(i+1<fc[2]) printf(", "); }
+    printf(" }\n");
+    return 0;
+}
