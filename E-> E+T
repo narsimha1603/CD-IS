@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#define OK 1
+#define NO  0
+char buf[512];
+char *p;
+void skipws(){ while(*p && isspace((unsigned char)*p)) p++; }
+char la(){ char *q=p; while(*q && isspace((unsigned char)*q)) q++; return *q?*q:'\0'; }
+void match(char c){ skipws(); if(*p==c) p++; }
+int parseE(void);
+int parseT(void);
+int parseE(void){
+    if(!parseT()) return NO;
+    while(la()=='+'){
+        match('+');
+        if(!parseT()) return NO;
+    }
+    return OK;
+}
+int parseT(void){
+    char c = la();
+    if(isalpha((unsigned char)c)){
+        while(isalnum((unsigned char)*p)) p++;
+        return OK;
+    }
+    if(isdigit((unsigned char)c)){
+        while(isdigit((unsigned char)*p)) p++;
+        return OK;
+    }
+    if(c=='('){
+        match('(');
+        if(!parseE()) return NO;
+        if(la()!=')') return NO;
+        match(')');
+        return OK;
+    }
+    return NO;
+}
+int parse(void){
+    p = buf;
+    skipws();
+    if(parseE() && la()=='\0') return OK;
+    return NO;
+}
+int main(void){
+    while(1){
+        if(!fgets(buf,sizeof(buf),stdin)) break;
+        size_t n=strlen(buf);
+        if(n && buf[n-1]=='\n') buf[n-1]=0;
+        if(buf[0]==0) break;
+        if(parse()) puts("ok"); else puts("error");
+    }
+    return 0;
+}
